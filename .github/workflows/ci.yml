@@ -1,0 +1,21 @@
+name: python task one CI continues
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install requirements
+        run: pip install -r requirements.txt
+
+      - name: Show Python version
+        run: python --version
