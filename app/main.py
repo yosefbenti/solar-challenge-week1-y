@@ -1,100 +1,49 @@
-import os
 import streamlit as st
-from utils import data_processing, stats  # Assuming these exist and are correct
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-def load_all_data():
-    files = {
-        'Benin': 'data/benin_clean.csv',
-        'Sierra Leone': 'data/sierraleone_clean.csv',
-        'Togo': 'data/togo_clean.csv'
-    }
-    dfs = []
-    countries = []
-    for country, filepath in files.items():
-        if os.path.exists(filepath):
-            df = data_processing.load_data(filepath)
-            dfs.append(df)
-            countries.append(country)
-        else:
-            st.warning(f"File not found: {filepath}")
-    return dfs, countries
+# This must be the very first Streamlit command!
+st.set_page_config(page_title="Solar Dashboard", layout="centered")
 
-def show_summary_table(dfs, countries):
-    # Build a summary DataFrame with mean, median, std for GHI, DNI, DHI per country
-    summary_rows = []
-    for df, country in zip(dfs, countries):
-        summary_rows.append({
-            'Country': country,
-            'GHI Mean': df['GHI'].mean(),
-            'GHI Median': df['GHI'].median(),
-            'GHI Std': df['GHI'].std(),
-            'DNI Mean': df['DNI'].mean(),
-            'DNI Median': df['DNI'].median(),
-            'DNI Std': df['DNI'].std(),
-            'DHI Mean': df['DHI'].mean(),
-            'DHI Median': df['DHI'].median(),
-            'DHI Std': df['DHI'].std()
-        })
-    summary_df = pd.DataFrame(summary_rows)
-    st.subheader("Summary Statistics by Country")
-    st.dataframe(summary_df)
+def load_uploaded_data():
+    st.sidebar.header("Upload CSV Files")
+    benin_file = st.sidebar.file_uploader("Upload benin_clean.csv", type=["csv"])
+    sierra_file = st.sidebar.file_uploader("Upload sierraleone_clean.csv", type=["csv"])
+    togo_file = st.sidebar.file_uploader("Upload togo_clean.csv", type=["csv"])
 
-def plot_boxplots(dfs, countries):
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    
-    # Combine data adding 'Country' column for plotting
-    combined = pd.DataFrame()
-    for df, country in zip(dfs, countries):
-        tmp = df.copy()
-        tmp['Country'] = country
-        combined = pd.concat([combined, tmp])
-    
-    metrics = ['GHI', 'DNI', 'DHI']
-    for metric in metrics:
-        plt.figure(figsize=(8, 5))
-        sns.boxplot(x='Country', y=metric, data=combined)
-        plt.title(f'Boxplot of {metric} by Country')
-        st.pyplot(plt)
-        plt.clf()
-
-def run_ghi_anova(dfs):
-    from scipy.stats import f_oneway, kruskal
-    # Collect GHI values for each country
-    ghi_values = [df['GHI'].dropna() for df in dfs]
-    
-    # Run ANOVA
-    f_stat, p_val = f_oneway(*ghi_values)
-    
-    st.subheader("ANOVA test for GHI differences across countries")
-    st.write(f"F-statistic: {f_stat:.4f}")
-    st.write(f"P-value: {p_val:.4e}")
-    
-    if p_val < 0.05:
-        st.write("There is a statistically significant difference in GHI between countries.")
+    if benin_file and sierra_file and togo_file:
+        df1 = pd.read_csv(benin_file)
+        df2 = pd.read_csv(sierra_file)
+        df3 = pd.read_csv(togo_file)
+        df1['Country'] = 'Benin'
+        df2['Country'] = 'Sierra_Leone'
+        df3['Country'] = 'Togo'
+        return pd.concat([df1, df2, df3], ignore_index=True)
     else:
-        st.write("No statistically significant difference detected in GHI between countries.")
+        st.warning("Please upload all three CSV files from the sidebar to proceed.")
+        return None
 
-def main():
-    st.title("Solar Challenge: Cross-Country Comparison")
+# Comment out or remove the old load_data() usage
+# df = load_data()
 
-    dfs, countries = load_all_data()
+df = load_uploaded_data()
 
-    if not dfs:
-        st.error("No data files found. Please add cleaned CSV files to the 'data' folder.")
-        return
+if df is not None:
+    st.title("Cross-Country Solar Energy Dashboard")
 
-    show_summary_table(dfs, countries)
-    plot_boxplots(dfs, countries)
-    run_ghi_anova(dfs)
+    countries = st.multiselect("Select Countries", df['Country'].unique(), default=list(df['Country'].unique()))
+    metric = st.selectbox("Select Metric", ['GHI', 'DNI', 'DHI', 'ModA', 'ModB', 'RH', 'WS', 'WSgust',
+                'WSstdev','WD','WDstdev','BP','Cleaning','Precipitation',
+                'TModA','TModB'])
 
-    st.markdown("""
-    ### Key Observations:
-    - Summarize your observations here.
-    - Example: Country X shows highest median GHI but also greatest variability.
-    - Example: Statistical testing indicates significant differences between countries.
-    """)
+    filtered_df = df[df['Country'].isin(countries)]
 
-if __name__ == "__main__":
-    main()
+    st.subheader(f"{metric} Distribution by Country")
+    fig, ax = plt.subplots()
+    sns.boxplot(x='Country', y=metric, data=filtered_df, ax=ax, palette='Set3')
+    st.pyplot(fig)
+
+    st.subheader("Top Regions by Average GHI")
+    top = df.groupby('Country')['GHI'].mean().sort_values(ascending=False).reset_index()
+    st.dataframe(top)
