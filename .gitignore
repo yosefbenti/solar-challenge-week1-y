@@ -7,3 +7,4 @@ data/*.csv
 # Optional: ignore large output files or temporary files
 *.log
 *.tmp
+venv/
