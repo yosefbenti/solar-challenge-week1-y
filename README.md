@@ -1,5 +1,10 @@
 # solar-challenge-week1-y
 
+## app link online ##
+## https://solar-challenge-week1-y.streamlit.app/##
+
+
+
 
 ## Environment Setup
 
