@@ -1,10 +1,32 @@
-# Ignore all CSVs in the data folder
-data/*.csv
+# --- General ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+*.out
+*.tmp
+*.bak
 
-# Jupyter Notebook checkpoints
+# --- Data files (Task 2) ---
+data/
+*.csv
+
+# --- Jupyter ---
 .ipynb_checkpoints/
 
-# Optional: ignore large output files or temporary files
-*.log
-*.tmp
+# --- Virtual environments (Task 1) ---
 venv/
+.venv/
+ENV/
+env/
+
+# --- Environment files ---
+.env
+
+# --- VSCode settings (if used) ---
+.vscode/
+
+# --- OS-specific ---
+.DS_Store
+Thumbs.db
