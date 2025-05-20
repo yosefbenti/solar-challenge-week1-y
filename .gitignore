@@ -1,0 +1,9 @@
+# Ignore all CSVs in the data folder
+data/*.csv
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Optional: ignore large output files or temporary files
+*.log
+*.tmp
